@@ -1,0 +1,19 @@
+[project]
+name = "airbnb-price-predictor"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "joblib>=1.6.0",
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.4",
+    "pandas>=3.1.0",
+    "plotly>=7.1.0",
+    "scikit-learn>=1.9.1",
+    "streamlit>=1.66.1",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+    "jupyter>=1.1.1",
+]
