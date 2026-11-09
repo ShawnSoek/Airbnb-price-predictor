@@ -19,12 +19,12 @@ SQL_PATH = Path("sql/features.sql")
 
 NUMERIC = [
     "accommodates", "bedrooms", "beds", "bathrooms",
-    "minimum_nights", "number_of_reviews", "review_scores_rating",
+    "minimum_nights", "availability_365", "amenity_count", "number_of_reviews", "review_scores_rating",
     "no_reviews", "shared_bath",
     "has_wifi", "has_ac", "has_kitchen", "has_washer", "has_elevator", "has_pool",
     "dist_center_km", "people_per_bedroom",
 ]
-CATEGORICAL = ["room_type", "neighbourhood"]
+CATEGORICAL = ["room_type", "property_type", "neighbourhood"]
 
 
 # Get the data out of SQL

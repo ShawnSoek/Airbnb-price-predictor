@@ -14,6 +14,7 @@ SELECT
 
     -- categories
     room_type,
+    property_type,
     neighbourhood_cleansed AS neighbourhood,
 
     -- size of the place
@@ -35,11 +36,14 @@ SELECT
 
     -- booking rules and reputation
     minimum_nights,
+    availability_365,
     number_of_reviews,
     review_scores_rating,
     CASE WHEN number_of_reviews = 0 THEN 1 ELSE 0 END AS no_reviews,
 
-    -- amenities: the raw column is one long text, yes/no flags are pulled out
+    -- amenities: the raw column is one long text, so we count the items (= commas + 1)
+    -- and pull out a few yes/no flags
+    LENGTH(amenities) - LENGTH(REPLACE(amenities, ',', '')) + 1 AS amenity_count,
     CASE WHEN amenities LIKE '%Wifi%'             THEN 1 ELSE 0 END AS has_wifi,
     CASE WHEN amenities LIKE '%Air conditioning%' THEN 1 ELSE 0 END AS has_ac,
     CASE WHEN amenities LIKE '%Kitchen%'          THEN 1 ELSE 0 END AS has_kitchen,
@@ -64,6 +68,7 @@ SELECT
 SELECT
     SUM(price_eur IS NULL)            AS price_missing,      -- must be 0
     SUM(room_type IS NULL)            AS room_type_missing,
+    SUM(property_type IS NULL)        AS property_type_missing,
     SUM(neighbourhood IS NULL)        AS neighbourhood_missing,
     SUM(bedrooms IS NULL)             AS bedrooms_missing,   -- must be 0 (dropped in cleaning)
     SUM(beds IS NULL)                 AS beds_missing,
@@ -80,7 +85,10 @@ SELECT
     MAX(accommodates)     AS max_guests,
     MAX(bedrooms)         AS max_bedrooms,
     MAX(bathrooms)        AS max_bathrooms,
-    MAX(minimum_nights)   AS max_min_nights
+    MAX(minimum_nights)   AS max_min_nights,
+    MIN(availability_365) AS availability_min,       -- should be >= 0
+    MAX(availability_365) AS availability_max,       -- should be <= 365
+    MAX(amenity_count)    AS max_amenities
 FROM model_features;
 
 -- 4. Bathroom text -> number: spot-check the translation
@@ -107,7 +115,14 @@ SELECT
     ROUND(AVG(has_pool), 2)     AS pool
 FROM model_features;
 
--- 6. Room types: how many and how expensive (entire homes should cost the most)
+-- 6. Most common property types (rare ones get grouped together in Python)
+SELECT property_type, COUNT(*) AS listings
+FROM model_features
+GROUP BY property_type
+ORDER BY listings DESC
+LIMIT 10;
+
+-- 7. Room types: how many and how expensive (entire homes should cost the most)
 SELECT
     room_type,
     COUNT(*)              AS listings,
