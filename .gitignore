@@ -20,3 +20,6 @@ data/*.db
 .idea/
 .DS_Store
 Thumbs.db
+
+# --- Models ---
+models/
