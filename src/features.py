@@ -1,4 +1,4 @@
-"""Phase 3: turn the clean SQL table into model inputs (X, y).
+"""Turn the clean SQL table into model inputs (X, y).
 
 Run from the project root:
     uv run python -m src.features
@@ -80,6 +80,7 @@ def get_train_test(test_size: float = 0.2, seed: int = 42):
     conn = sqlite3.connect(DB_PATH)
     try:
         df = add_python_features(load_features(conn))
+        df = df.set_index("id")   # row labels = listing ids, so predictions can be traced back
 
         X = df[NUMERIC + CATEGORICAL]
         y = np.log1p(df["price_eur"])          # log price because of long tail in distribution
@@ -88,7 +89,7 @@ def get_train_test(test_size: float = 0.2, seed: int = 42):
 
         # Remember which listing went where, so later phases (and the app) can query it
         split = pd.DataFrame({
-            "id": df["id"],
+            "id": df.index,
             "split": np.where(df.index.isin(X_train.index), "train", "test"),
         })
         split.to_sql("data_split", conn, if_exists="replace", index=False)
