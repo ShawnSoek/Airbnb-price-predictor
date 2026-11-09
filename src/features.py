@@ -17,13 +17,30 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 DB_PATH = Path("data/airbnb.db")
 SQL_PATH = Path("sql/features.sql")
 
+# Places that drive Airbnb prices in Barcelona: (latitude, longitude).
+# Coordinates are approximate (good enough for distances in km)
+LANDMARKS = {
+    "placa_catalunya": (41.3870, 2.1701),   # city centre / main square
+    "sagrada_familia": (41.4036, 2.1744),
+    "park_guell":      (41.4145, 2.1527),
+    "sants_station":   (41.3791, 2.1403),   # main train station
+    "camp_nou":        (41.3809, 2.1228),
+}
+# The coast is long, so "distance to the beach" = distance to the nearest of these points
+BEACH_POINTS = [
+    (41.3785, 2.1925),   # Barceloneta
+    (41.3917, 2.2090),   # Bogatell
+    (41.3993, 2.2170),   # Mar Bella
+]
+LANDMARK_COLUMNS = [f"dist_{name}_km" for name in LANDMARKS] + ["dist_beach_km"]
+
 NUMERIC = [
     "accommodates", "bedrooms", "beds", "bathrooms",
     "minimum_nights", "availability_365", "amenity_count", "number_of_reviews", "review_scores_rating",
     "no_reviews", "shared_bath",
     "has_wifi", "has_ac", "has_kitchen", "has_washer", "has_elevator", "has_pool",
     "dist_center_km", "people_per_bedroom",
-]
+] + LANDMARK_COLUMNS
 CATEGORICAL = ["room_type", "property_type", "neighbourhood"]
 
 
@@ -51,6 +68,11 @@ def add_python_features(df: pd.DataFrame) -> pd.DataFrame:
     center_lat, center_lon = df["latitude"].median(), df["longitude"].median()
     df["dist_center_km"] = haversine_km(df["latitude"], df["longitude"],
                                         center_lat, center_lon)
+    for name, (lat, lon) in LANDMARKS.items():
+        df[f"dist_{name}_km"] = haversine_km(df["latitude"], df["longitude"], lat, lon)
+    df["dist_beach_km"] = np.minimum.reduce([
+        haversine_km(df["latitude"], df["longitude"], lat, lon) for lat, lon in BEACH_POINTS
+    ])
     df["people_per_bedroom"] = df["accommodates"] / df["bedrooms"].clip(lower=1)
     return df
 
