@@ -62,10 +62,16 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return 6371 * 2 * np.arcsin(np.sqrt(a))
 
 
-def add_python_features(df: pd.DataFrame) -> pd.DataFrame:
+def city_center(df: pd.DataFrame) -> tuple[float, float]:
+    """'Centre' = middle of all listings -> works for any city without hard-coding."""
+    return df["latitude"].median(), df["longitude"].median()
+
+
+def add_python_features(df: pd.DataFrame, center: tuple[float, float] | None = None) -> pd.DataFrame:
+    """Add distance features. Pass `center` when df is not the whole dataset
+    (e.g. a single listing typed into the app), otherwise it is computed from df."""
     df = df.copy()
-    # "Centre" = middle of all listings -> works for any city without hard-coding
-    center_lat, center_lon = df["latitude"].median(), df["longitude"].median()
+    center_lat, center_lon = center if center is not None else city_center(df)
     df["dist_center_km"] = haversine_km(df["latitude"], df["longitude"],
                                         center_lat, center_lon)
     for name, (lat, lon) in LANDMARKS.items():
